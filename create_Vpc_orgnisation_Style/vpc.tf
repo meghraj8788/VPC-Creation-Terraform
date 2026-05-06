@@ -26,7 +26,7 @@ resource "aws_subnet" "public-rt" {
   map_public_ip_on_launch = true
 
   tags = merge(var.tags , {
-    "Name" = "${var.environment}-public-subnet-${count.index + 1}"
+    "Name" = "${var.environment}-public-subnet-${each.key}"
 })
 }
 
@@ -39,7 +39,7 @@ resource "aws_subnet" "private-rt" {
   availability_zone = each.key
 
   tags = merge(var.tags , {
-    "Name" = "${var.environment}-private-subnet-${count.index + 1}"
+    "Name" = "${var.environment}-private-subnet-${each.key}"
 })
 }
 
@@ -61,38 +61,35 @@ resource "aws_nat_gateway" "nat-gw" {
 }
 
 # Create a route table for public subnets
-resource "aws_route_table" "public-rtable" {
+resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
-  route = {
+  route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
-  tags = merge(var.tags , {
-    "Name" = "${var.environment}-public-rt"
-})
+  tags = merge(var.tags, { Name = "${var.environment}-public-rt" })
 }
 #associate public subnets with route table
 resource "aws_route_table_association" "public-rt-ass" {
   for_each = aws_subnet.public-rt
   subnet_id = each.value.id
-  route_table_id = aws_route_table.public-rtable.id
+  route_table_id = aws_route_table.public_rt.id
 }   
 
 # Create private subnet route table
-resource "aws_route_table" "private-rtable" {   
+resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.main.id
-  route = {
-    cidr_block = "0.0.,0.0/0"
+  route {
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat-gw.id
   }
-  tags = merge(var.tags , {
-    "Name" = "${var.environment}-private-rt"
-})
+  tags = merge(var.tags, { Name = "${var.environment}-private-rt" })
 }
+
 
 #associate private subnets with route table
 resource "aws_route_table_association" "private-rt-ass" {
   for_each = aws_subnet.private-rt
   subnet_id = each.value.id
-  route_table_id = aws_route_table.private-rtable.id
+  route_table_id = aws_route_table.private_rt.id
 }
