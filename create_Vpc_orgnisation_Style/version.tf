@@ -6,6 +6,9 @@ terraform {
       source = "hashicorp/aws"
     }
   }
+
+
+#first s3 need to create then only we can use remote backend
   backend "storage" {
   bucket = "my-tfstate-bucket-meghraj"
   key    = "devops/terraform.tfstate"
@@ -15,6 +18,8 @@ terraform {
 }
 }
 
+
+#backend we cannot use if their is no s3 bucket 
 module "s3" {
   source = "./module/s3"
 }
